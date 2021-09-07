@@ -1,0 +1,59 @@
+# https://github.com/awslabs/serverless-application-model/blob/develop/versions/2016-10-31.md
+# Indentation needs to be set with spaces, because YAML...
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+    BgsProcessReviewQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: bgs-process-run-end-queue
+            VisibilityTimeout: 601
+    BgsProcessReviewSqsQueuePolicy:
+        Type: AWS::SQS::QueuePolicy
+        Properties:
+            PolicyDocument:
+                Version: '2012-10-17'
+                Id: BgsProcessReviewQueuePolicy
+                Statement:
+                    - Sid: Allow-SNS-SendMessage
+                      Effect: Allow
+                      Principal:
+                          AWS: '*'
+                      Action:
+                          - sqs:SendMessage
+                      Resource: !GetAtt BgsProcessReviewQueue.Arn
+                      Condition:
+                          ArnEquals:
+                              aws:SourceArn: arn:aws:sns:us-west-2:478062583808:battlegrounds-review-published
+            Queues:
+                - !Ref BgsProcessReviewQueue
+    SnsSubscription:
+        Type: AWS::SNS::Subscription
+        Properties:
+            Protocol: SQS
+            Endpoint: !GetAtt BgsProcessReviewQueue.Arn
+            TopicArn: arn:aws:sns:us-west-2:478062583808:battlegrounds-review-published
+
+    ProcessBgsReviewFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: process-bgs-review.default
+            Runtime: nodejs12.x
+            CodeUri: ./dist/process-bgs-review
+            MemorySize: 192
+            Timeout: 40
+            ReservedConcurrentExecutions: 1
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - SecretsManagerReadWrite
+                - AmazonSESFullAccess
+                - AmazonSQSFullAccess
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: process-bgs-review
+            Events:
+                SQSEvent:
+                    Type: SQS
+                    Properties:
+                        Queue: !GetAtt BgsProcessReviewQueue.Arn
