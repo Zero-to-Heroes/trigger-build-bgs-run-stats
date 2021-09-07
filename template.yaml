@@ -41,7 +41,7 @@ Resources:
             Handler: process-bgs-review.default
             Runtime: nodejs12.x
             CodeUri: ./dist/process-bgs-review
-            MemorySize: 192
+            MemorySize: 512
             Timeout: 40
             ReservedConcurrentExecutions: 1
             Policies:
