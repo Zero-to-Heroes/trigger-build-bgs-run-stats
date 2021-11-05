@@ -1,6 +1,7 @@
 import { BgsPostMatchStats, parseHsReplayString, Replay } from '@firestone-hs/hs-replay-xml-parser/dist/public-api';
 import { AllCardsService } from '@firestone-hs/reference-data';
 import { Map } from 'immutable';
+import { inflate } from 'pako';
 import { ServerlessMysql } from 'serverless-mysql';
 import SqlString from 'sqlstring';
 import { getConnection } from './db/rds';
@@ -8,7 +9,6 @@ import { getConnection as getConnectionBgs } from './db/rds-bgs';
 import { S3 } from './db/s3';
 import { ReviewMessage } from './review-message';
 import { buildCompsByTurn } from './utils/warband-stats-builder';
-import { inflate } from 'pako';
 
 const allCards = new AllCardsService();
 const s3 = new S3();
@@ -157,7 +157,7 @@ const retrieveCombatWinrate = async (
 		.filter(result => result?.simulationResult?.wonPercent != null)
 		.map(result => ({
 			turn: result.turn,
-			winrate: result.simulationResult.wonPercent,
+			winrate: Math.round(10 * result.simulationResult.wonPercent) / 10,
 		}));
 };
 
