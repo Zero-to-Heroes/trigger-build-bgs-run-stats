@@ -18,9 +18,9 @@
 	"dependencies": {
 		"@firestone-hs/build-global-stats": "^1.0.3",
 		"@firestone-hs/hs-replay-xml-parser": "0.0.66",
-		"@firestone-hs/reference-data": "^0.1.145",
+		"@firestone-hs/reference-data": "^0.1.182",
 		"@types/elementtree": "^0.1.0",
-		"aws-sdk": "^2.524.0",
+		"aws-sdk": "^2.1044.0",
 		"cross-fetch": "^3.0.6",
 		"deckstrings": "^2.2.1",
 		"elementtree": "^0.1.7",
