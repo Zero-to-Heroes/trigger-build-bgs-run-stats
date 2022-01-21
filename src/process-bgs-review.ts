@@ -27,6 +27,7 @@ export default async (event): Promise<any> => {
 	const mysql = await getConnection();
 	const mysqlBgs = await getConnectionBgs();
 	for (const message of messages) {
+		console.log('handling review', message.reviewId);
 		await handleReview(message, mysql, mysqlBgs);
 	}
 	await mysql.end();

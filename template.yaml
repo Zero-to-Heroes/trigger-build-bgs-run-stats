@@ -42,8 +42,8 @@ Resources:
             Runtime: nodejs12.x
             CodeUri: ./dist/process-bgs-review
             MemorySize: 512
-            Timeout: 40
-            ReservedConcurrentExecutions: 1
+            Timeout: 90
+            ReservedConcurrentExecutions: 5
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
                 - SecretsManagerReadWrite
