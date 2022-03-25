@@ -1,6 +1,10 @@
-import { BgsPostMatchStats, parseHsReplayString, Replay } from '@firestone-hs/hs-replay-xml-parser/dist/public-api';
+import {
+	BgsPostMatchStats,
+	parseBattlegroundsGame,
+	parseHsReplayString,
+	Replay,
+} from '@firestone-hs/hs-replay-xml-parser/dist/public-api';
 import { AllCardsService } from '@firestone-hs/reference-data';
-import { Map } from 'immutable';
 import { inflate } from 'pako';
 import { ServerlessMysql } from 'serverless-mysql';
 import SqlString from 'sqlstring';
@@ -8,7 +12,6 @@ import { getConnection } from './db/rds';
 import { getConnection as getConnectionBgs } from './db/rds-bgs';
 import { S3 } from './db/s3';
 import { ReviewMessage } from './review-message';
-import { buildCompsByTurn } from './utils/warband-stats-builder';
 
 const allCards = new AllCardsService();
 const s3 = new S3();
@@ -116,23 +119,29 @@ const handleReview = async (
 const buildWarbandStats = async (message: ReviewMessage): Promise<readonly InternalWarbandStats[]> => {
 	try {
 		const replayString = await s3.loadReplayString(message.replayKey);
-		const replay: Replay = parseHsReplayString(replayString);
-		const compsByTurn: Map<
-			number,
-			readonly { cardId: string; attack: number; health: number }[]
-		> = buildCompsByTurn(replay);
-		const warbandStats: readonly InternalWarbandStats[] = compsByTurn
-			.map((value, key) => value.reduce((acc, obj) => acc + (obj.attack || 0) + (obj.health || 0), 0))
-			.map(
-				(totalStatsForTurn, turnNumber) =>
-					({
-						turn: turnNumber,
-						totalStats: totalStatsForTurn,
-					} as InternalWarbandStats),
-			)
-			.valueSeq()
-			.toArray();
-		return warbandStats;
+		const stats = parseBattlegroundsGame(replayString, null, null, null);
+		const result = stats.totalStatsOverTurn.map(stat => ({
+			turn: stat.turn,
+			totalStats: stat.value,
+		}));
+		console.log('built warband stats', message.reviewId, result);
+		return result;
+		// const compsByTurn: Map<
+		// 	number,
+		// 	readonly { cardId: string; attack: number; health: number }[]
+		// > = buildCompsByTurn(replay);
+		// const warbandStats: readonly InternalWarbandStats[] = compsByTurn
+		// 	.map((value, key) => value.reduce((acc, obj) => acc + (obj.attack || 0) + (obj.health || 0), 0))
+		// 	.map(
+		// 		(totalStatsForTurn, turnNumber) =>
+		// 			({
+		// 				turn: turnNumber,
+		// 				totalStats: totalStatsForTurn,
+		// 			} as InternalWarbandStats),
+		// 	)
+		// 	.valueSeq()
+		// 	.toArray();
+		// return warbandStats;
 	} catch (e) {
 		console.error('Exception while building warband stats', e);
 		return null;
