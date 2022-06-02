@@ -13,6 +13,7 @@ export interface ReviewMessage {
 	readonly playerHero: string;
 	readonly playerName: string;
 	readonly playerRank: string;
+	readonly newPlayerRank: string;
 	readonly result: 'lost' | 'won' | 'tied';
 	readonly reviewId: string;
 	readonly gameMode: string;
