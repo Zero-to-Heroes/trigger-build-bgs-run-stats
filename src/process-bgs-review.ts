@@ -9,7 +9,6 @@ import { inflate } from 'pako';
 import { ServerlessMysql } from 'serverless-mysql';
 import SqlString from 'sqlstring';
 import { getConnection } from './db/rds';
-import { getConnection as getConnectionBgs } from './db/rds-bgs';
 import { S3 } from './db/s3';
 import { ReviewMessage } from './review-message';
 
@@ -28,20 +27,15 @@ export default async (event): Promise<any> => {
 		.filter(msg => msg)
 		.map(msg => JSON.parse(msg));
 	const mysql = await getConnection();
-	const mysqlBgs = await getConnectionBgs();
 	for (const message of messages) {
 		console.log('handling review', message.reviewId);
-		await handleReview(message, mysql, mysqlBgs);
+		await handleReview(message, mysql);
 	}
 	await mysql.end();
 	return { statusCode: 200, body: null };
 };
 
-const handleReview = async (
-	message: ReviewMessage,
-	mysql: ServerlessMysql,
-	mysqlBgs: ServerlessMysql,
-): Promise<void> => {
+const handleReview = async (message: ReviewMessage, mysql: ServerlessMysql): Promise<void> => {
 	if (message.gameMode !== 'battlegrounds') {
 		console.log('not battlegrounds', message);
 		return;
@@ -65,7 +59,7 @@ const handleReview = async (
 
 	const warbandStats = await buildWarbandStats(message);
 	// Because there is a race, the combat winrate might have been populated first
-	const combatWinrate = await retrieveCombatWinrate(message, mysqlBgs);
+	const combatWinrate = await retrieveCombatWinrate(message, mysql);
 	console.log('retrieved combat winrate?', combatWinrate);
 	const playerRank = message.playerRank ?? message.newPlayerRank;
 	const row: InternalBgsRow = {
@@ -150,14 +144,14 @@ const buildWarbandStats = async (message: ReviewMessage): Promise<readonly Inter
 
 const retrieveCombatWinrate = async (
 	message: ReviewMessage,
-	mysqlBgs: ServerlessMysql,
+	mysql: ServerlessMysql,
 ): Promise<readonly InternalCombatWinrate[]> => {
 	const query = `
 		SELECT * FROM bgs_single_run_stats
 		WHERE reviewId = '${message.reviewId}'
 	`;
 	console.log('running query', query);
-	const results: any[] = await mysqlBgs.query(query);
+	const results: any[] = await mysql.query(query);
 	console.log('results', results);
 	if (!results?.length) {
 		return null;
