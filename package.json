@@ -16,6 +16,7 @@
 	"license": "MIT",
 	"private": false,
 	"dependencies": {
+		"@firestone-hs/aws-lambda-utils": "0.0.5",
 		"@firestone-hs/build-global-stats": "^1.0.3",
 		"@firestone-hs/hs-replay-xml-parser": "0.0.95",
 		"@firestone-hs/reference-data": "^0.1.182",

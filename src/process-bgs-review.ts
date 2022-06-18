@@ -1,16 +1,10 @@
-import {
-	BgsPostMatchStats,
-	parseBattlegroundsGame,
-	parseHsReplayString,
-	Replay,
-} from '@firestone-hs/hs-replay-xml-parser/dist/public-api';
+import { BgsPostMatchStats, parseBattlegroundsGame } from '@firestone-hs/hs-replay-xml-parser/dist/public-api';
 import { AllCardsService } from '@firestone-hs/reference-data';
 import { inflate } from 'pako';
 import { ServerlessMysql } from 'serverless-mysql';
 import SqlString from 'sqlstring';
-import { getConnection } from './db/rds';
-import { S3 } from './db/s3';
 import { ReviewMessage } from './review-message';
+import { logger, S3, getConnection } from '@firestone-hs/aws-lambda-utils';
 
 const allCards = new AllCardsService();
 const s3 = new S3();
@@ -28,7 +22,7 @@ export default async (event): Promise<any> => {
 		.map(msg => JSON.parse(msg));
 	const mysql = await getConnection();
 	for (const message of messages) {
-		console.log('handling review', message.reviewId);
+		logger.debug('handling review', message.reviewId);
 		await handleReview(message, mysql);
 	}
 	await mysql.end();
@@ -37,19 +31,19 @@ export default async (event): Promise<any> => {
 
 const handleReview = async (message: ReviewMessage, mysql: ServerlessMysql): Promise<void> => {
 	if (message.gameMode !== 'battlegrounds') {
-		console.log('not battlegrounds', message);
+		logger.debug('not battlegrounds', message);
 		return;
 	}
 	if (!message.additionalResult || isNaN(parseInt(message.additionalResult))) {
-		console.log('no end position', message);
+		logger.debug('no end position', message);
 		return;
 	}
 	// if (!message.playerRank || isNaN(parseInt(message.playerRank))) {
-	// 	console.log('no player rank', message);
+	// 	logger.debug('no player rank', message);
 	// 	return;
 	// }
 	// if (!message.availableTribes?.length) {
-	// 	console.log('no available tribes', message);
+	// 	logger.debug('no available tribes', message);
 	// 	return;
 	// }
 	await allCards.initializeCardsDb();
@@ -60,7 +54,7 @@ const handleReview = async (message: ReviewMessage, mysql: ServerlessMysql): Pro
 	const warbandStats = await buildWarbandStats(message);
 	// Because there is a race, the combat winrate might have been populated first
 	const combatWinrate = await retrieveCombatWinrate(message, mysql);
-	console.log('retrieved combat winrate?', combatWinrate);
+	logger.debug('retrieved combat winrate?', combatWinrate);
 	const playerRank = message.playerRank ?? message.newPlayerRank;
 	const row: InternalBgsRow = {
 		creationDate: new Date(message.creationDate),
@@ -106,7 +100,7 @@ const handleReview = async (message: ReviewMessage, mysql: ServerlessMysql): Pro
 			${SqlString.escape(JSON.stringify(row.warbandStats))}
 		)
 	`;
-	console.log('running query', insertQuery);
+	logger.debug('running query', insertQuery);
 	await mysql.query(insertQuery);
 };
 
@@ -118,7 +112,7 @@ const buildWarbandStats = async (message: ReviewMessage): Promise<readonly Inter
 			turn: stat.turn,
 			totalStats: stat.value,
 		}));
-		console.log('built warband stats', message.reviewId, result);
+		logger.debug('built warband stats', message.reviewId, result);
 		return result;
 		// const compsByTurn: Map<
 		// 	number,
@@ -137,7 +131,7 @@ const buildWarbandStats = async (message: ReviewMessage): Promise<readonly Inter
 		// 	.toArray();
 		// return warbandStats;
 	} catch (e) {
-		console.error('Exception while building warband stats', e);
+		logger.error('Exception while building warband stats', e);
 		return null;
 	}
 };
@@ -150,9 +144,9 @@ const retrieveCombatWinrate = async (
 		SELECT * FROM bgs_single_run_stats
 		WHERE reviewId = '${message.reviewId}'
 	`;
-	console.log('running query', query);
+	logger.debug('running query', query);
 	const results: any[] = await mysql.query(query);
-	console.log('results', results);
+	logger.debug('results', results);
 	if (!results?.length) {
 		return null;
 	}
@@ -175,7 +169,7 @@ const parseStats = (inputStats: string): BgsPostMatchStats => {
 			const inflated = inflate(fromBase64, { to: 'string' });
 			return JSON.parse(inflated);
 		} catch (e) {
-			console.warn('Could not build full stats, ignoring review', inputStats);
+			logger.warn('Could not build full stats, ignoring review', inputStats);
 		}
 	}
 };
@@ -198,7 +192,7 @@ const normalizeHeroCardId = (heroCardId: string, allCards: AllCardsService = nul
 
 	// Fallback to regex
 	const bgHeroSkinMatch = heroCardId.match(/(.*)_SKIN_.*/);
-	// console.debug('normalizing', heroCardId, bgHeroSkinMatch);
+	// logger.debug('normalizing', heroCardId, bgHeroSkinMatch);
 	if (bgHeroSkinMatch) {
 		return bgHeroSkinMatch[1];
 	}

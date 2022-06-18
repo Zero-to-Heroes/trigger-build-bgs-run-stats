@@ -1,5 +1,6 @@
 import { Map } from 'immutable';
 import fetch, { RequestInfo } from 'node-fetch';
+import { logger } from '@firestone-hs/aws-lambda-utils';
 
 function partitionArray<T>(array: readonly T[], partitionSize: number): readonly T[][] {
 	const workingCopy: T[] = [...array];
@@ -18,7 +19,7 @@ async function http(request: RequestInfo): Promise<any> {
 					return response.text();
 				},
 				error => {
-					console.warn('could not retrieve review', error);
+					logger.warn('could not retrieve review', error);
 				},
 			)
 			.then(body => {

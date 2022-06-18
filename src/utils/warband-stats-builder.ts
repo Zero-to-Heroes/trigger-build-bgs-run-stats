@@ -55,11 +55,6 @@ const parseElement = (
 				structure.entities[element.get('entity')].zone = parseInt(element.get('value'));
 			}
 			if (parseInt(element.get('tag')) === GameTag.ATK) {
-				// console.log(
-				// 	'changing attack',
-				// 	structure.entities[element.get('entity')],
-				// 	parseInt(element.get('value')),
-				// );
 				structure.entities[element.get('entity')].attack = parseInt(element.get('value'));
 				if (structure.entities[element.get('entity')].isDeathwing) {
 					structure.entities[element.get('entity')].attack -= 3;
@@ -88,11 +83,6 @@ const parseElement = (
 						attack: entity.attack,
 						health: entity.health,
 					}));
-				// console.log(
-				// 	'emitting new turn values',
-				// 	structure.currentTurn,
-				// 	JSON.stringify(playerEntitiesOnBoard, null, 4),
-				// );
 				structure.boardByTurn = structure.boardByTurn.set(structure.currentTurn, playerEntitiesOnBoard);
 				structure.currentTurn++;
 			}
