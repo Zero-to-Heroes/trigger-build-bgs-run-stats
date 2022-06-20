@@ -19,7 +19,7 @@
 		"@firestone-hs/aws-lambda-utils": "0.0.8",
 		"@firestone-hs/build-global-stats": "^1.0.3",
 		"@firestone-hs/hs-replay-xml-parser": "0.0.95",
-		"@firestone-hs/reference-data": "^0.1.182",
+		"@firestone-hs/reference-data": "^1.0.1",
 		"@types/elementtree": "^0.1.0",
 		"aws-sdk": "^2.1044.0",
 		"cross-fetch": "^3.1.5",
