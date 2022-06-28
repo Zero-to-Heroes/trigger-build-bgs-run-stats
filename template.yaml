@@ -52,8 +52,8 @@ Resources:
                 # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
             Tags:
                 LambdaName: process-bgs-review
-            Events:
-                SQSEvent:
-                    Type: SQS
-                    Properties:
-                        Queue: !GetAtt BgsProcessReviewQueue.Arn
+            # Events:
+            #     SQSEvent:
+            #         Type: SQS
+            #         Properties:
+            #             Queue: !GetAtt BgsProcessReviewQueue.Arn

@@ -32,6 +32,12 @@ export default async (event, context): Promise<any> => {
 };
 
 const handleReview = async (message: ReviewMessage, mysql: ServerlessMysql): Promise<void> => {
+	const useNewProcess = true;
+	if (useNewProcess) {
+		console.log('new process, returning');
+		return;
+	}
+
 	if (message.gameMode !== 'battlegrounds') {
 		logger.debug('not battlegrounds', message);
 		return;

@@ -19,6 +19,8 @@ export interface ReviewMessage {
 	readonly gameMode: string;
 	readonly creationDate: string;
 	readonly userId: string;
+	readonly userName: string;
+	readonly appChannel: string;
 	readonly gameFormat: string;
 	readonly opponentCardId: string;
 	readonly playerCardId: string;
